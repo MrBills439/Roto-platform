@@ -15,3 +15,7 @@ app.use(requestLogger);
 app.use("/api", routes);
 
 app.use(errorHandler);
+app.get("/health", (req, res) => {
+    res.json({ ok: true });
+  });
+  
