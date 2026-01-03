@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { env } from "../../env";
 
+
 export type AuthUser = {
   id: string;
   role: string;
