@@ -1,0 +1,141 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  MANAGER
+  TEAM_LEADER
+  STAFF
+}
+
+enum Gender {
+  M
+  F
+  OTHER
+  NA
+}
+
+enum ShiftType {
+  LONG_DAY
+  SLEEP_IN
+  CUSTOM
+}
+
+enum AuditEntityType {
+  USER
+  HOUSE
+  SHIFT
+  ASSIGNMENT
+}
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+  ASSIGN
+  UNASSIGN
+  OVERRIDE
+}
+
+model User {
+  id           String       @id @default(cuid())
+  email        String       @unique
+  passwordHash String
+  firstName    String
+  lastName     String
+  role         Role         @default(STAFF)
+  gender       Gender       @default(NA)
+  phone        String?
+  isActive     Boolean      @default(true)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  assignments  Assignment[]
+  auditLogs    AuditLog[]   @relation("AuditActor")
+  rotaSends    RotaSend[]   @relation("RotaSender")
+  assignedBy   Assignment[] @relation("AssignmentAssignedBy")
+  editedShifts Shift[]      @relation("ShiftLastEditedBy")
+  createdAssignments Assignment[] @relation("AssignmentCreatedBy")
+  updatedAssignments Assignment[] @relation("AssignmentUpdatedBy")
+}
+
+model House {
+  id        String     @id @default(cuid())
+  name      String
+  location  String
+  isActive  Boolean    @default(true)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  shifts    Shift[]
+  rotaSends RotaSend[]
+}
+
+model Shift {
+  id         String      @id @default(cuid())
+  houseId    String
+  name       String?
+  shiftType  ShiftType
+  shiftDate  DateTime
+  startTime  String
+  endTime    String
+  notes      String?
+  lastEditedById String?
+  lastEditedAt   DateTime?
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+
+  house       House        @relation(fields: [houseId], references: [id])
+  assignments Assignment[]
+  lastEditedBy User?       @relation("ShiftLastEditedBy", fields: [lastEditedById], references: [id])
+}
+
+model Assignment {
+  id           String   @id @default(cuid())
+  shiftId      String
+  userId       String
+  assignedById String?
+  createdById  String
+  updatedById  String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  shift      Shift  @relation(fields: [shiftId], references: [id])
+  user       User   @relation(fields: [userId], references: [id])
+  assignedBy User?  @relation("AssignmentAssignedBy", fields: [assignedById], references: [id])
+  createdBy  User   @relation("AssignmentCreatedBy", fields: [createdById], references: [id])
+  updatedBy  User   @relation("AssignmentUpdatedBy", fields: [updatedById], references: [id])
+
+  @@unique([shiftId, userId])
+}
+
+model AuditLog {
+  id         String          @id @default(cuid())
+  entityType AuditEntityType
+  entityId   String
+  action     AuditAction
+  actorId    String?
+  beforeJson Json?
+  afterJson  Json?
+  metadata   Json?
+  createdAt  DateTime        @default(now())
+
+  actor User? @relation("AuditActor", fields: [actorId], references: [id])
+}
+
+model RotaSend {
+  id            String   @id @default(cuid())
+  houseId       String
+  weekStartDate DateTime
+  sentAt        DateTime @default(now())
+  sentById      String?
+
+  house  House @relation(fields: [houseId], references: [id])
+  sentBy User? @relation("RotaSender", fields: [sentById], references: [id])
+}
