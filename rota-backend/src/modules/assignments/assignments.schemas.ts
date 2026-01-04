@@ -10,3 +10,14 @@ export const createAssignmentSchema = z.object({
   override: z.boolean().optional().default(false),
   overrideReason: z.string().optional()
 });
+
+export const updateAssignmentSchema = z
+  .object({
+    shiftId: z.string().min(1).optional(),
+    staffUserId: z.string().min(1).optional(),
+    override: z.boolean().optional().default(false),
+    overrideReason: z.string().optional()
+  })
+  .refine((data) => data.shiftId || data.staffUserId, {
+    message: "At least one field must be provided"
+  });

@@ -1,6 +1,8 @@
 import { Request, Response, NextFunction } from "express";
 import { shiftsService } from "./shifts.service";
-import { createShiftSchema } from "./shifts.schemas";
+import { createShiftSchema, listOpenShiftsQuerySchema } from "./shifts.schemas";
+import { ApiError } from "../../common/errors/ApiError";
+import { addUtcDays, parseDateOnly } from "../../common/utils/time";
 
 export const shiftsController = {
   async create(req: Request, res: Response, next: NextFunction) {
@@ -21,4 +23,19 @@ export const shiftsController = {
       return next(err);
     }
   },
+
+  async listOpen(req: Request, res: Response, next: NextFunction) {
+    try {
+      const query = listOpenShiftsQuerySchema.parse(req.query);
+      const start = parseDateOnly(query.weekStart);
+      if (!start) {
+        throw new ApiError("Invalid date", 400, "INVALID_DATE");
+      }
+      const end = addUtcDays(start, 6);
+      const shifts = await shiftsService.listOpen(start, end);
+      return res.json(shifts);
+    } catch (err) {
+      return next(err);
+    }
+  }
 };

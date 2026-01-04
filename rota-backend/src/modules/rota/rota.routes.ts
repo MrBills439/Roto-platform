@@ -10,3 +10,9 @@ rotaRouter.get(
   requireRoles("ADMIN", "MANAGER", "TEAM_LEADER"),
   rotaController.getWeek
 );
+rotaRouter.post(
+  "/copy-week",
+  requireAuth,
+  requireRoles("ADMIN", "MANAGER"),
+  rotaController.copyWeek
+);

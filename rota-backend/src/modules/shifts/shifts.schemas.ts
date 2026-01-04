@@ -8,5 +8,10 @@ export const createShiftSchema = z.object({
     shiftType: z.nativeEnum(ShiftType),
     startTime: z.string(),
     endTime: z.string(),
+    requiredStaffCount: z.coerce.number().int().min(1).optional()
   });
+
+export const listOpenShiftsQuerySchema = z.object({
+  weekStart: z.string().regex(/^\\d{4}-\\d{2}-\\d{2}$/)
+});
   

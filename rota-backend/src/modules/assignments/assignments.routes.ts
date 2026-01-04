@@ -16,3 +16,9 @@ assignmentsRouter.delete(
   requireRoles("ADMIN", "MANAGER"),
   assignmentsController.remove
 );
+assignmentsRouter.patch(
+  "/:id",
+  requireAuth,
+  requireRoles("ADMIN", "MANAGER"),
+  assignmentsController.update
+);

@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { createAssignmentSchema, assignmentIdParamSchema } from "./assignments.schemas";
+import { createAssignmentSchema, assignmentIdParamSchema, updateAssignmentSchema } from "./assignments.schemas";
 import { assignmentsService } from "./assignments.service";
 
 export const assignmentsController = {
@@ -19,6 +19,18 @@ export const assignmentsController = {
       const params = assignmentIdParamSchema.parse(req.params);
       const actorId = req.user!.id;
       const result = await assignmentsService.remove(params.id, actorId);
+      return res.json(result);
+    } catch (err) {
+      return next(err);
+    }
+  },
+
+  async update(req: Request, res: Response, next: NextFunction) {
+    try {
+      const params = assignmentIdParamSchema.parse(req.params);
+      const body = updateAssignmentSchema.parse(req.body);
+      const actorId = req.user!.id;
+      const result = await assignmentsService.update(params.id, body, actorId);
       return res.json(result);
     } catch (err) {
       return next(err);

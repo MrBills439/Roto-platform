@@ -32,3 +32,19 @@ export const addUtcDays = (date: Date, days: number) => {
 export const rangesOverlap = (startA: Date, endA: Date, startB: Date, endB: Date) => {
   return startA < endB && startB < endA;
 };
+
+export const parseDateOnly = (value: string) => {
+  const [year, month, day] = value.split("-").map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day));
+  if (Number.isNaN(date.getTime())) {
+    return null;
+  }
+  return date;
+};
+
+export const formatDateOnly = (date: Date) => {
+  const y = date.getUTCFullYear();
+  const m = String(date.getUTCMonth() + 1).padStart(2, "0");
+  const d = String(date.getUTCDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+};
