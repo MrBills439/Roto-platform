@@ -1,10 +1,11 @@
+import { ShiftType } from "@prisma/client";
 import { prisma } from "../../prisma";
 
 export type CreateShiftInput = {
   name: string;
   houseId: string;
   shiftDate: string; // ISO date e.g. "2026-01-06"
-  shiftType: "LONG_DAY" | "SLEEP_IN";
+  shiftType: ShiftType;
   startTime: string; // "08:00"
   endTime: string;   // "20:00"
 };

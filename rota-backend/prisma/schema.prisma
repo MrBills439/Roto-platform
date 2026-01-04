@@ -23,9 +23,12 @@ enum Gender {
 
 enum ShiftType {
   LONG_DAY
+  MID_DAY
+  WAKE_NIGHT
   SLEEP_IN
   CUSTOM
 }
+
 
 enum AuditEntityType {
   USER
