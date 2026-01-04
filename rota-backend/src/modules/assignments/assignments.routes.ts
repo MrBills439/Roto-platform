@@ -22,3 +22,5 @@ assignmentsRouter.patch(
   requireRoles("ADMIN", "MANAGER"),
   assignmentsController.update
 );
+assignmentsRouter.post("/:id/accept", requireAuth, assignmentsController.accept);
+assignmentsRouter.post("/:id/reject", requireAuth, assignmentsController.reject);

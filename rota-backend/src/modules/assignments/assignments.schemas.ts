@@ -21,3 +21,7 @@ export const updateAssignmentSchema = z
   .refine((data) => data.shiftId || data.staffUserId, {
     message: "At least one field must be provided"
   });
+
+export const assignmentActionParamSchema = z.object({
+  id: z.string().min(1)
+});

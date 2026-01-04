@@ -12,6 +12,7 @@ export default function UsersPage() {
   const [staffOnly, setStaffOnly] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [role, setRole] = useState<string | null>(null);
 
   const [form, setForm] = useState({
     email: "",
@@ -23,6 +24,18 @@ export default function UsersPage() {
     gender: "NA"
   });
   const [loading, setLoading] = useState(false);
+
+  const formatError = (err: ApiError) => {
+    if (err.code === "VALIDATION_ERROR" && err.details && typeof err.details === "object") {
+      const details = err.details as { fieldErrors?: Record<string, string[]> };
+      const fieldErrors = details.fieldErrors || {};
+      const firstField = Object.keys(fieldErrors)[0];
+      if (firstField && fieldErrors[firstField]?.length) {
+        return `${firstField}: ${fieldErrors[firstField][0]}`;
+      }
+    }
+    return err.message;
+  };
 
   const loadUsers = async () => {
     setError(null);
@@ -40,6 +53,15 @@ export default function UsersPage() {
   };
 
   useEffect(() => {
+    const stored = localStorage.getItem("rota_user");
+    if (stored) {
+      try {
+        const user = JSON.parse(stored) as { role?: string };
+        setRole(user.role ?? null);
+      } catch {
+        setRole(null);
+      }
+    }
     void loadUsers();
   }, [staffOnly]);
 
@@ -75,7 +97,7 @@ export default function UsersPage() {
       await loadUsers();
     } catch (err) {
       if (err instanceof ApiError) {
-        setError(err.message);
+        setError(formatError(err));
       } else {
         setError("Failed to create user");
       }
@@ -86,6 +108,11 @@ export default function UsersPage() {
 
   return (
     <div className="space-y-6">
+      {role === "STAFF" ? (
+        <div className="rounded border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
+          You do not have access to manage users.
+        </div>
+      ) : null}
       <div>
         <h1 className="text-2xl font-semibold">Users</h1>
         <p className="text-sm text-slate-600">Manage staff accounts and access.</p>

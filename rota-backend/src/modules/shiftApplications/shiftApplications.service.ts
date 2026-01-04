@@ -80,7 +80,7 @@ export const shiftApplicationsService = {
     }
 
     const assignment = await assignmentsService.create(
-      { shiftId: application.shiftId, staffUserId: application.userId },
+      { shiftId: application.shiftId, staffUserId: application.userId, autoAccept: true },
       actorId
     );
 

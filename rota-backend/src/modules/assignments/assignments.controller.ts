@@ -1,5 +1,10 @@
 import { Request, Response, NextFunction } from "express";
-import { createAssignmentSchema, assignmentIdParamSchema, updateAssignmentSchema } from "./assignments.schemas";
+import {
+  createAssignmentSchema,
+  assignmentIdParamSchema,
+  assignmentActionParamSchema,
+  updateAssignmentSchema
+} from "./assignments.schemas";
 import { assignmentsService } from "./assignments.service";
 
 export const assignmentsController = {
@@ -31,6 +36,28 @@ export const assignmentsController = {
       const body = updateAssignmentSchema.parse(req.body);
       const actorId = req.user!.id;
       const result = await assignmentsService.update(params.id, body, actorId);
+      return res.json(result);
+    } catch (err) {
+      return next(err);
+    }
+  },
+
+  async accept(req: Request, res: Response, next: NextFunction) {
+    try {
+      const params = assignmentActionParamSchema.parse(req.params);
+      const userId = req.user!.id;
+      const result = await assignmentsService.accept(params.id, userId);
+      return res.json(result);
+    } catch (err) {
+      return next(err);
+    }
+  },
+
+  async reject(req: Request, res: Response, next: NextFunction) {
+    try {
+      const params = assignmentActionParamSchema.parse(req.params);
+      const userId = req.user!.id;
+      const result = await assignmentsService.reject(params.id, userId);
       return res.json(result);
     } catch (err) {
       return next(err);

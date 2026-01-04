@@ -1,6 +1,7 @@
 import bcrypt from "bcrypt";
 import { prisma } from "../../prisma";
 import { ApiError } from "../../common/errors/ApiError";
+import { addUtcDays, parseDateOnly } from "../../common/utils/time";
 
 export const usersService = {
   async create(
@@ -110,5 +111,27 @@ export const usersService = {
     });
 
     return user;
+  },
+
+  async listMyShifts(userId: string, weekStart: string) {
+    const start = parseDateOnly(weekStart);
+    if (!start) {
+      throw new ApiError("Invalid date", 400, "INVALID_DATE");
+    }
+    const end = addUtcDays(start, 6);
+
+    return prisma.assignment.findMany({
+      where: {
+        userId,
+        status: "ACCEPTED",
+        shift: {
+          shiftDate: { gte: start, lte: end }
+        }
+      },
+      include: {
+        shift: true
+      },
+      orderBy: { shift: { shiftDate: "asc" } }
+    });
   }
 };

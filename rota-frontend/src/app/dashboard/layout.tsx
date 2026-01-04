@@ -8,11 +8,13 @@ import { apiFetch } from "../../lib/api";
 import type { NotificationItem } from "../../types/api";
 
 const navItems = [
-  { label: "Rota", href: "/dashboard/rota" },
-  { label: "Houses", href: "/dashboard/houses" },
-  { label: "Users", href: "/dashboard/users" },
-  { label: "Shifts", href: "/dashboard/shifts" },
-  { label: "Assignments", href: "/dashboard/assignments" }
+  { label: "Rota", href: "/dashboard/rota", roles: ["ADMIN", "MANAGER", "TEAM_LEADER"] },
+  { label: "Houses", href: "/dashboard/houses", roles: ["ADMIN", "MANAGER"] },
+  { label: "Users", href: "/dashboard/users", roles: ["ADMIN", "MANAGER"] },
+  { label: "Shifts", href: "/dashboard/shifts", roles: ["ADMIN", "MANAGER", "TEAM_LEADER"] },
+  { label: "Assignments", href: "/dashboard/assignments", roles: ["ADMIN", "MANAGER", "TEAM_LEADER"] },
+  { label: "My Shifts", href: "/dashboard/my-shifts", roles: ["STAFF"] },
+  { label: "Open Shifts", href: "/dashboard/open-shifts", roles: ["STAFF"] }
 ];
 
 export default function DashboardLayout({
@@ -23,6 +25,7 @@ export default function DashboardLayout({
   const pathname = usePathname();
   const router = useRouter();
   const [userLabel, setUserLabel] = useState<string | null>(null);
+  const [userRole, setUserRole] = useState<string | null>(null);
   const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
@@ -34,6 +37,7 @@ export default function DashboardLayout({
     const user = getUser();
     if (user) {
       setUserLabel(`${user.email} (${user.role})`);
+      setUserRole(user.role);
     }
 
     const loadNotifications = async () => {
@@ -71,7 +75,9 @@ export default function DashboardLayout({
             <span>Rota Admin</span>
           </div>
           <nav className="space-y-1">
-          {navItems.map((item) => {
+          {navItems
+            .filter((item) => !item.roles || (userRole && item.roles.includes(userRole)))
+            .map((item) => {
             const active = pathname === item.href;
             return (
               <Link
@@ -99,9 +105,12 @@ export default function DashboardLayout({
               </span>
             ) : null}
             <div className="relative">
-              <span className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-700">
+              <Link
+                href="/dashboard/notifications"
+                className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-700"
+              >
                 Notifications
-              </span>
+              </Link>
               {unreadCount > 0 ? (
                 <span className="absolute -right-2 -top-2 inline-flex h-5 min-w-[20px] items-center justify-center rounded-full bg-[#ff5a5f] px-1 text-[10px] font-semibold text-white">
                   {unreadCount}

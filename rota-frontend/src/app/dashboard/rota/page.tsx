@@ -497,9 +497,70 @@ export default function RotaPage() {
             </div>
           </div>
 
-          {role && [\"ADMIN\", \"MANAGER\"].includes(role) ? (
+          {role && ["ADMIN", "MANAGER"].includes(role) ? (
             <>
-              <div className=\"rounded-2xl border border-[#e6e7ea] bg-white p-4 shadow-sm\">\n                <div className=\"text-sm font-semibold text-slate-700\">Templates</div>\n                <div className=\"mt-2 space-y-2\">\n                  <select\n                    className=\"w-full rounded-xl border border-slate-200 px-3 py-2 text-sm\"\n                    value={selectedTemplate}\n                    onChange={(event) => setSelectedTemplate(event.target.value)}\n                  >\n                    <option value=\"\" disabled>\n                      Select template\n                    </option>\n                    {templates.map((template) => (\n                      <option key={template.id} value={template.id}>\n                        {template.name}\n                      </option>\n                    ))}\n                  </select>\n                  <button\n                    type=\"button\"\n                    className=\"w-full rounded-full bg-[#151618] px-3 py-2 text-xs font-semibold text-white\"\n                    onClick={handleApplyTemplate}\n                    disabled={loading || !selectedTemplate}\n                  >\n                    Apply template\n                  </button>\n                </div>\n                <div className=\"mt-4 space-y-2\">\n                  <div className=\"text-xs font-semibold text-slate-600\">Save current week as template</div>\n                  <input\n                    className=\"w-full rounded-xl border border-slate-200 px-3 py-2 text-sm\"\n                    placeholder=\"Template name\"\n                    value={templateName}\n                    onChange={(event) => setTemplateName(event.target.value)}\n                  />\n                  <button\n                    type=\"button\"\n                    className=\"w-full rounded-full border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700\"\n                    onClick={handleCreateTemplate}\n                    disabled={loading || !templateName.trim()}\n                  >\n                    Save template\n                  </button>\n                </div>\n              </div>\n\n              <div className=\"rounded-2xl border border-[#e6e7ea] bg-white p-4 shadow-sm\">\n                <div className=\"text-sm font-semibold text-slate-700\">Copy schedule</div>\n                <p className=\"text-xs text-slate-500\">Duplicate this week's shifts into another week.</p>\n                <button\n                  type=\"button\"\n                  className=\"mt-3 w-full rounded-full border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700\"\n                  onClick={() => {\n                    const target = addDays(new Date(`${weekStart}T00:00:00Z`), 7);\n                    void handleCopyWeek(formatDate(target));\n                  }}\n                  disabled={loading}\n                >\n                  Copy to next week\n                </button>\n              </div>\n            </>\n          ) : null}
+              <div className="rounded-2xl border border-[#e6e7ea] bg-white p-4 shadow-sm">
+                <div className="text-sm font-semibold text-slate-700">Templates</div>
+                <div className="mt-2 space-y-2">
+                  <select
+                    className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
+                    value={selectedTemplate}
+                    onChange={(event) => setSelectedTemplate(event.target.value)}
+                  >
+                    <option value="" disabled>
+                      Select template
+                    </option>
+                    {templates.map((template) => (
+                      <option key={template.id} value={template.id}>
+                        {template.name}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    className="w-full rounded-full bg-[#151618] px-3 py-2 text-xs font-semibold text-white"
+                    onClick={handleApplyTemplate}
+                    disabled={loading || !selectedTemplate}
+                  >
+                    Apply template
+                  </button>
+                </div>
+                <div className="mt-4 space-y-2">
+                  <div className="text-xs font-semibold text-slate-600">Save current week as template</div>
+                  <input
+                    className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
+                    placeholder="Template name"
+                    value={templateName}
+                    onChange={(event) => setTemplateName(event.target.value)}
+                  />
+                  <button
+                    type="button"
+                    className="w-full rounded-full border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700"
+                    onClick={handleCreateTemplate}
+                    disabled={loading || !templateName.trim()}
+                  >
+                    Save template
+                  </button>
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-[#e6e7ea] bg-white p-4 shadow-sm">
+                <div className="text-sm font-semibold text-slate-700">Copy schedule</div>
+                <p className="text-xs text-slate-500">Duplicate this week's shifts into another week.</p>
+                <button
+                  type="button"
+                  className="mt-3 w-full rounded-full border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700"
+                  onClick={() => {
+                    const target = addDays(new Date(`${weekStart}T00:00:00Z`), 7);
+                    void handleCopyWeek(formatDate(target));
+                  }}
+                  disabled={loading}
+                >
+                  Copy to next week
+                </button>
+              </div>
+            </>
+          ) : null}
 
           <div className="rounded-2xl border border-[#e6e7ea] bg-white p-4 shadow-sm">
             <div className="text-sm font-semibold text-slate-700">Open shifts</div>

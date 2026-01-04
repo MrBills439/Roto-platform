@@ -6,4 +6,5 @@ export const usersRouter = Router();
 
 usersRouter.post("/", requireAuth, requireRoles("ADMIN"), usersController.create);
 usersRouter.get("/", requireAuth, requireRoles("ADMIN", "MANAGER"), usersController.list);
+usersRouter.get("/me/shifts", requireAuth, usersController.myShifts);
 usersRouter.patch("/:id", requireAuth, requireRoles("ADMIN"), usersController.update);

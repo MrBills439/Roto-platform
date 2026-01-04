@@ -9,6 +9,7 @@ type CreateAssignmentInput = {
   staffUserId: string;
   override?: boolean;
   overrideReason?: string;
+  autoAccept?: boolean;
 };
 
 type UpdateAssignmentInput = {
@@ -147,12 +148,56 @@ const checkOverlap = async (staffUserId: string, shift: { shiftDate: Date; start
 };
 
 export const assignmentsService = {
+  async expirePending() {
+    const now = new Date();
+    const expired = await prisma.assignment.findMany({
+      where: {
+        status: "PENDING",
+        expiresAt: { lt: now }
+      }
+    });
+    if (expired.length === 0) {
+      return;
+    }
+
+    await prisma.assignment.updateMany({
+      where: {
+        id: { in: expired.map((item) => item.id) }
+      },
+      data: {
+        status: "EXPIRED",
+        respondedAt: now
+      }
+    });
+
+    const managerIds = await prisma.user.findMany({
+      where: { role: { in: ["ADMIN", "MANAGER"] } },
+      select: { id: true }
+    });
+
+    const managerIdsList = managerIds.map((manager) => manager.id);
+    for (const assignment of expired) {
+      for (const managerId of managerIdsList) {
+        await notificationsService.create({
+          userId: managerId,
+          type: "SHIFT_EXPIRED",
+          title: "Assignment expired",
+          body: "A pending shift assignment expired.",
+          data: { assignmentId: assignment.id, shiftId: assignment.shiftId }
+        });
+      }
+    }
+  },
   async create(input: CreateAssignmentInput, actorId: string) {
     const staff = await loadStaff(input.staffUserId);
     const shift = await loadShift(input.shiftId);
 
     const existingAssignment = await prisma.assignment.findFirst({
-      where: { shiftId: input.shiftId, userId: input.staffUserId },
+      where: {
+        shiftId: input.shiftId,
+        userId: input.staffUserId,
+        status: { in: ["PENDING", "ACCEPTED"] }
+      },
       select: { id: true }
     });
     if (existingAssignment) {
@@ -167,13 +212,17 @@ export const assignmentsService = {
     );
     await checkOverlap(input.staffUserId, shift);
 
+    const expiresAt = input.autoAccept ? null : new Date(Date.now() + 10 * 60 * 1000);
     const assignment = await prisma.assignment.create({
       data: {
         shiftId: input.shiftId,
         userId: input.staffUserId,
         assignedById: actorId,
         createdById: actorId,
-        updatedById: actorId
+        updatedById: actorId,
+        status: input.autoAccept ? "ACCEPTED" : "PENDING",
+        expiresAt,
+        respondedAt: input.autoAccept ? new Date() : null
       }
     });
 
@@ -212,9 +261,11 @@ export const assignmentsService = {
     await notificationsService.create({
       userId: assignment.userId,
       type: "SHIFT_ASSIGNED",
-      title: "New shift assignment",
-      body: `You have been assigned to ${shift.name || "a shift"}.`,
-      data: { shiftId: assignment.shiftId, assignmentId: assignment.id }
+      title: input.autoAccept ? "Shift assigned" : "Shift assignment pending",
+      body: input.autoAccept
+        ? `You have been assigned to ${shift.name || "a shift"}.`
+        : `Please accept your shift assignment for ${shift.name || "a shift"}.`,
+      data: { shiftId: assignment.shiftId, assignmentId: assignment.id, expiresAt }
     });
 
     return {
@@ -304,7 +355,12 @@ export const assignmentsService = {
     const shift = await loadShift(targetShiftId);
 
     const existingAssignment = await prisma.assignment.findFirst({
-      where: { shiftId: targetShiftId, userId: targetUserId, id: { not: assignment.id } },
+      where: {
+        shiftId: targetShiftId,
+        userId: targetUserId,
+        id: { not: assignment.id },
+        status: { in: ["PENDING", "ACCEPTED"] }
+      },
       select: { id: true }
     });
     if (existingAssignment) {
@@ -320,13 +376,17 @@ export const assignmentsService = {
     );
     await checkOverlap(targetUserId, shift, assignment.id);
 
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
     const updated = await prisma.assignment.update({
       where: { id },
       data: {
         shiftId: targetShiftId,
         userId: targetUserId,
         assignedById: actorId,
-        updatedById: actorId
+        updatedById: actorId,
+        status: "PENDING",
+        expiresAt,
+        respondedAt: null
       }
     });
 
@@ -384,17 +444,17 @@ export const assignmentsService = {
       await notificationsService.create({
         userId: updated.userId,
         type: "SHIFT_ASSIGNED",
-        title: "New shift assignment",
-        body: `You have been assigned to ${shift.name || "a shift"}.`,
-        data: { assignmentId: updated.id, shiftId: updated.shiftId }
+        title: "Shift assignment pending",
+        body: `Please accept your shift assignment for ${shift.name || "a shift"}.`,
+        data: { assignmentId: updated.id, shiftId: updated.shiftId, expiresAt }
       });
     } else if (assignment.shiftId !== updated.shiftId) {
       await notificationsService.create({
         userId: updated.userId,
         type: "SHIFT_CHANGED",
         title: "Shift updated",
-        body: "Your shift assignment was moved to a different shift.",
-        data: { assignmentId: updated.id, shiftId: updated.shiftId }
+        body: "Your shift assignment was moved to a different shift. Please accept it again.",
+        data: { assignmentId: updated.id, shiftId: updated.shiftId, expiresAt }
       });
     }
 
@@ -405,5 +465,86 @@ export const assignmentsService = {
       staffName: `${staff.firstName} ${staff.lastName}`,
       staffGender: staff.gender
     };
+  },
+
+  async accept(id: string, userId: string) {
+    const assignment = await prisma.assignment.findUnique({
+      where: { id },
+      include: { shift: true }
+    });
+    if (!assignment) {
+      throw new ApiError("Assignment not found", 404, "ASSIGNMENT_NOT_FOUND");
+    }
+    if (assignment.userId !== userId) {
+      throw new ApiError("Forbidden", 403, "FORBIDDEN");
+    }
+    if (assignment.status !== "PENDING") {
+      throw new ApiError("Assignment is not pending", 409, "ASSIGNMENT_NOT_PENDING");
+    }
+    if (assignment.expiresAt && assignment.expiresAt < new Date()) {
+      await prisma.assignment.update({
+        where: { id },
+        data: { status: "EXPIRED", respondedAt: new Date() }
+      });
+      throw new ApiError("Assignment has expired", 409, "ASSIGNMENT_EXPIRED");
+    }
+
+    const updated = await prisma.assignment.update({
+      where: { id },
+      data: { status: "ACCEPTED", respondedAt: new Date(), expiresAt: null }
+    });
+
+    const managerIds = await prisma.user.findMany({
+      where: { role: { in: ["ADMIN", "MANAGER"] } },
+      select: { id: true }
+    });
+    for (const manager of managerIds) {
+      await notificationsService.create({
+        userId: manager.id,
+        type: "SHIFT_ASSIGNED",
+        title: "Assignment accepted",
+        body: "A staff member accepted their assignment.",
+        data: { assignmentId: updated.id, shiftId: updated.shiftId }
+      });
+    }
+
+    return updated;
+  },
+
+  async reject(id: string, userId: string) {
+    const assignment = await prisma.assignment.findUnique({
+      where: { id },
+      include: { shift: true }
+    });
+    if (!assignment) {
+      throw new ApiError("Assignment not found", 404, "ASSIGNMENT_NOT_FOUND");
+    }
+    if (assignment.userId !== userId) {
+      throw new ApiError("Forbidden", 403, "FORBIDDEN");
+    }
+    if (assignment.status !== "PENDING") {
+      throw new ApiError("Assignment is not pending", 409, "ASSIGNMENT_NOT_PENDING");
+    }
+
+    const updated = await prisma.assignment.update({
+      where: { id },
+      data: { status: "REJECTED", respondedAt: new Date(), expiresAt: null }
+    });
+
+    const managerIds = await prisma.user.findMany({
+      where: { role: { in: ["ADMIN", "MANAGER"] } },
+      select: { id: true }
+    });
+    for (const manager of managerIds) {
+      await notificationsService.create({
+        userId: manager.id,
+        type: "SHIFT_CHANGED",
+        title: "Assignment rejected",
+        body: "A staff member rejected their assignment.",
+        data: { assignmentId: updated.id, shiftId: updated.shiftId }
+      });
+    }
+
+    return updated;
   }
 };

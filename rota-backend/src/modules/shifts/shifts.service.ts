@@ -37,16 +37,24 @@ export const shiftsService = {
   async listOpen(start: Date, end: Date) {
     const shifts = await prisma.shift.findMany({
       where: { shiftDate: { gte: start, lte: end } },
-      include: { _count: { select: { assignments: true } } },
+      include: {
+        assignments: {
+          where: { status: "ACCEPTED" },
+          select: { id: true }
+        }
+      },
       orderBy: { shiftDate: "asc" }
     });
 
     return shifts
-      .filter((shift) => shift._count.assignments < shift.requiredStaffCount)
-      .map((shift) => ({
-        ...shift,
-        assignedCount: shift._count.assignments,
-        openSlots: shift.requiredStaffCount - shift._count.assignments
-      }));
+      .filter((shift) => shift.assignments.length < shift.requiredStaffCount)
+      .map((shift) => {
+        const { assignments, ...rest } = shift;
+        return {
+          ...rest,
+          assignedCount: assignments.length,
+          openSlots: shift.requiredStaffCount - assignments.length
+        };
+      });
   }
 };

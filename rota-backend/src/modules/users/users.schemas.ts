@@ -21,6 +21,10 @@ export const listUsersQuerySchema = z.object({
   role: z.literal("STAFF").optional()
 });
 
+export const myShiftsQuerySchema = z.object({
+  weekStart: z.string().regex(/^\d{4}-\d{2}-\d{2}$/)
+});
+
 export const updateUserSchema = z
   .object({
     isActive: z.boolean().optional(),

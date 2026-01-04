@@ -62,9 +62,17 @@ enum NotificationType {
   SHIFT_ASSIGNED
   SHIFT_UNASSIGNED
   SHIFT_CHANGED
+  SHIFT_EXPIRED
   APPLICATION_APPROVED
   APPLICATION_REJECTED
   AVAILABILITY_SUBMITTED
+}
+
+enum AssignmentStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  EXPIRED
 }
 
 model User {
@@ -135,6 +143,9 @@ model Assignment {
   assignedById String?
   createdById  String
   updatedById  String
+  status       AssignmentStatus @default(PENDING)
+  expiresAt    DateTime?
+  respondedAt  DateTime?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 

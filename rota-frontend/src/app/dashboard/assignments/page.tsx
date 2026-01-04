@@ -10,6 +10,7 @@ export default function AssignmentsPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [role, setRole] = useState<string | null>(null);
 
   const [form, setForm] = useState({
     shiftId: "",
@@ -45,6 +46,15 @@ export default function AssignmentsPage() {
   };
 
   useEffect(() => {
+    const stored = localStorage.getItem("rota_user");
+    if (stored) {
+      try {
+        const user = JSON.parse(stored) as { role?: string };
+        setRole(user.role ?? null);
+      } catch {
+        setRole(null);
+      }
+    }
     void loadData();
   }, []);
 
@@ -106,6 +116,11 @@ export default function AssignmentsPage() {
 
   return (
     <div className="space-y-6">
+      {role === "STAFF" ? (
+        <div className="rounded border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
+          You do not have access to manage assignments.
+        </div>
+      ) : null}
       <div>
         <h1 className="text-2xl font-semibold">Assignments</h1>
         <p className="text-sm text-slate-600">Assign staff to shifts and manage overrides.</p>

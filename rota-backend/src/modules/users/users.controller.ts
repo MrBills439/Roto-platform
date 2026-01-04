@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { usersService } from "./users.service";
-import { createUserSchema, listUsersQuerySchema, updateUserSchema, userIdParamSchema } from "./users.schemas";
+import { createUserSchema, listUsersQuerySchema, myShiftsQuerySchema, updateUserSchema, userIdParamSchema } from "./users.schemas";
 import { ApiError } from "../../common/errors/ApiError";
 
 export const usersController = {
@@ -35,6 +35,17 @@ export const usersController = {
       const actorId = req.user!.id;
       const user = await usersService.update(params.id, body, actorId);
       return res.json(user);
+    } catch (err) {
+      return next(err);
+    }
+  },
+
+  async myShifts(req: Request, res: Response, next: NextFunction) {
+    try {
+      const query = myShiftsQuerySchema.parse(req.query);
+      const userId = req.user!.id;
+      const shifts = await usersService.listMyShifts(userId, query.weekStart);
+      return res.json(shifts);
     } catch (err) {
       return next(err);
     }
