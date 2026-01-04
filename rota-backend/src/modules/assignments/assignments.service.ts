@@ -1,6 +1,8 @@
 import { prisma } from "../../prisma";
 import { ApiError } from "../../common/errors/ApiError";
 import { addUtcDays, dateAtUtcTime, parseTimeToMinutes, rangesOverlap } from "../../common/utils/time";
+import { Prisma } from "@prisma/client";
+
 
 type CreateAssignmentInput = {
   shiftId: string;
@@ -139,7 +141,8 @@ export const assignmentsService = {
         entityId: assignment.id,
         action: "ASSIGN",
         actorId,
-        beforeJson: null,
+        beforeJson: Prisma.JsonNull,
+
         afterJson: {
           id: assignment.id,
           shiftId: assignment.shiftId,
@@ -211,7 +214,8 @@ export const assignmentsService = {
           startTime: assignment.shift.startTime,
           endTime: assignment.shift.endTime
         },
-        afterJson: null
+        afterJson: Prisma.JsonNull
+
       }
     });
 
