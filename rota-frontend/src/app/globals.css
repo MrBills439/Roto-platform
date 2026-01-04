@@ -1,5 +1,4 @@
 @import "tailwindcss";
-@import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap");
 
 :root {
   --background: #f7f7f4;
@@ -11,15 +10,7 @@
   --border: #e6e7ea;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
-}
-
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
 }

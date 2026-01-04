@@ -159,7 +159,7 @@ export const assignmentsService = {
       throw new ApiError("Assignment already exists", 409, "ASSIGNMENT_EXISTS");
     }
 
-    const { dailyCount, overrideUsed } = await checkDailyLimit(
+    const { overrideUsed } = await checkDailyLimit(
       input.staffUserId,
       shift.shiftDate,
       input.override,

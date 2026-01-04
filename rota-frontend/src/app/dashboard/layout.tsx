@@ -4,8 +4,11 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { clearAuth, getToken, getUser } from "../../lib/auth";
+import { apiFetch } from "../../lib/api";
+import type { NotificationItem } from "../../types/api";
 
 const navItems = [
+  { label: "Rota", href: "/dashboard/rota" },
   { label: "Houses", href: "/dashboard/houses" },
   { label: "Users", href: "/dashboard/users" },
   { label: "Shifts", href: "/dashboard/shifts" },
@@ -20,6 +23,7 @@ export default function DashboardLayout({
   const pathname = usePathname();
   const router = useRouter();
   const [userLabel, setUserLabel] = useState<string | null>(null);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
     const token = getToken();
@@ -31,6 +35,20 @@ export default function DashboardLayout({
     if (user) {
       setUserLabel(`${user.email} (${user.role})`);
     }
+
+    const loadNotifications = async () => {
+      try {
+        const items = await apiFetch<NotificationItem[]>("/notifications");
+        const unread = items.filter((item) => !item.readAt).length;
+        setUnreadCount(unread);
+      } catch {
+        setUnreadCount(0);
+      }
+    };
+
+    void loadNotifications();
+    const interval = window.setInterval(loadNotifications, 30000);
+    return () => window.clearInterval(interval);
   }, [router]);
 
   const handleLogout = () => {
@@ -75,11 +93,21 @@ export default function DashboardLayout({
           <header className="flex items-center justify-between border-b border-[#e6e7ea] bg-white/80 px-6 py-4 backdrop-blur">
             <div className="text-sm text-slate-600">Dashboard</div>
             <div className="flex items-center gap-4">
-              {userLabel ? (
-                <span className="rounded-full bg-[#f2f3f5] px-3 py-1 text-xs font-medium text-slate-600">
-                  {userLabel}
+            {userLabel ? (
+              <span className="rounded-full bg-[#f2f3f5] px-3 py-1 text-xs font-medium text-slate-600">
+                {userLabel}
+              </span>
+            ) : null}
+            <div className="relative">
+              <span className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-700">
+                Notifications
+              </span>
+              {unreadCount > 0 ? (
+                <span className="absolute -right-2 -top-2 inline-flex h-5 min-w-[20px] items-center justify-center rounded-full bg-[#ff5a5f] px-1 text-[10px] font-semibold text-white">
+                  {unreadCount}
                 </span>
               ) : null}
+            </div>
               <button
                 type="button"
                 className="rounded-full border border-slate-300 px-3 py-1 text-xs font-semibold text-slate-700 transition hover:bg-slate-100"
