@@ -4,6 +4,12 @@ import { requireAuth, requireRoles } from "../../common/middlewares/auth";
 
 export const assignmentsRouter = Router();
 
+assignmentsRouter.get(
+  "/",
+  requireAuth,
+  requireRoles("ADMIN", "MANAGER"),
+  assignmentsController.list
+);
 assignmentsRouter.post(
   "/",
   requireAuth,

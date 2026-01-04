@@ -59,6 +59,27 @@ export type AssignmentCreateResponse = {
 
 export type AssignmentDeleteResponse = { id: string };
 
+export type AssignmentListItem = {
+  id: string;
+  status: "PENDING" | "ACCEPTED" | "REJECTED" | "EXPIRED";
+  user: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+  };
+  shift: {
+    id: string;
+    name: string | null;
+    shiftType: ShiftType;
+    shiftDate: string;
+    house: {
+      id: string;
+      name: string;
+    };
+  };
+};
+
 export type RotaWeekResponse = {
   weekStart: string;
   weekEnd: string;

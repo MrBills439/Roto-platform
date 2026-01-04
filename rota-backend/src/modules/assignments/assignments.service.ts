@@ -148,13 +148,43 @@ const checkOverlap = async (staffUserId: string, shift: { shiftDate: Date; start
 };
 
 export const assignmentsService = {
+  async list() {
+    return prisma.assignment.findMany({
+      include: {
+        user: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true
+          }
+        },
+        shift: {
+          select: {
+            id: true,
+            name: true,
+            shiftType: true,
+            shiftDate: true,
+            house: {
+              select: {
+                id: true,
+                name: true
+              }
+            }
+          }
+        }
+      },
+      orderBy: { createdAt: "desc" }
+    });
+  },
   async expirePending() {
     const now = new Date();
     const expired = await prisma.assignment.findMany({
       where: {
         status: "PENDING",
         expiresAt: { lt: now }
-      }
+      },
+      select: { id: true, shiftId: true, assignedById: true }
     });
     if (expired.length === 0) {
       return;
@@ -170,23 +200,7 @@ export const assignmentsService = {
       }
     });
 
-    const managerIds = await prisma.user.findMany({
-      where: { role: { in: ["ADMIN", "MANAGER"] } },
-      select: { id: true }
-    });
-
-    const managerIdsList = managerIds.map((manager) => manager.id);
-    for (const assignment of expired) {
-      for (const managerId of managerIdsList) {
-        await notificationsService.create({
-          userId: managerId,
-          type: "SHIFT_EXPIRED",
-          title: "Assignment expired",
-          body: "A pending shift assignment expired.",
-          data: { assignmentId: assignment.id, shiftId: assignment.shiftId }
-        });
-      }
-    }
+    // No manager notifications for expiries (reject-only rule).
   },
   async create(input: CreateAssignmentInput, actorId: string) {
     const staff = await loadStaff(input.staffUserId);
@@ -494,19 +508,7 @@ export const assignmentsService = {
       data: { status: "ACCEPTED", respondedAt: new Date(), expiresAt: null }
     });
 
-    const managerIds = await prisma.user.findMany({
-      where: { role: { in: ["ADMIN", "MANAGER"] } },
-      select: { id: true }
-    });
-    for (const manager of managerIds) {
-      await notificationsService.create({
-        userId: manager.id,
-        type: "SHIFT_ASSIGNED",
-        title: "Assignment accepted",
-        body: "A staff member accepted their assignment.",
-        data: { assignmentId: updated.id, shiftId: updated.shiftId }
-      });
-    }
+    // No manager notification on accept (reject-only rule).
 
     return updated;
   },
@@ -531,13 +533,9 @@ export const assignmentsService = {
       data: { status: "REJECTED", respondedAt: new Date(), expiresAt: null }
     });
 
-    const managerIds = await prisma.user.findMany({
-      where: { role: { in: ["ADMIN", "MANAGER"] } },
-      select: { id: true }
-    });
-    for (const manager of managerIds) {
+    if (assignment.assignedById) {
       await notificationsService.create({
-        userId: manager.id,
+        userId: assignment.assignedById,
         type: "SHIFT_CHANGED",
         title: "Assignment rejected",
         body: "A staff member rejected their assignment.",

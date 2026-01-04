@@ -21,7 +21,7 @@ export const usersController = {
       if (query.role && query.role !== "STAFF") {
         throw new ApiError("Only STAFF role is supported", 400, "INVALID_QUERY");
       }
-      const users = await usersService.listStaff();
+      const users = query.role === "STAFF" ? await usersService.listStaff() : await usersService.listAll();
       return res.json(users);
     } catch (err) {
       return next(err);

@@ -75,6 +75,23 @@ export const usersService = {
     });
   },
 
+  async listAll() {
+    return prisma.user.findMany({
+      orderBy: [{ lastName: "asc" }, { firstName: "asc" }],
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        role: true,
+        gender: true,
+        phone: true,
+        isActive: true,
+        createdAt: true
+      }
+    });
+  },
+
   async update(
     id: string,
     data: { isActive?: boolean; phone?: string; gender?: "M" | "F" | "OTHER" | "NA" },

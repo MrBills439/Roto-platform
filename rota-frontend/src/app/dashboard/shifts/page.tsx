@@ -105,12 +105,9 @@ export default function ShiftsPage() {
   const groupedEntries = Object.entries(grouped).sort(([a], [b]) => a.localeCompare(b));
 
   const handleShiftTypeChange = (value: ShiftType) => {
-    const hours = standardHours[value];
     setForm((prev) => ({
       ...prev,
-      shiftType: value,
-      startTime: hours?.start || prev.startTime,
-      endTime: hours?.end || prev.endTime
+      shiftType: value
     }));
   };
 

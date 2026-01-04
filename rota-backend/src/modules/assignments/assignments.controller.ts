@@ -8,6 +8,14 @@ import {
 import { assignmentsService } from "./assignments.service";
 
 export const assignmentsController = {
+  async list(req: Request, res: Response, next: NextFunction) {
+    try {
+      const result = await assignmentsService.list();
+      return res.json(result);
+    } catch (err) {
+      return next(err);
+    }
+  },
   async create(req: Request, res: Response, next: NextFunction) {
     try {
       const body = createAssignmentSchema.parse(req.body);
