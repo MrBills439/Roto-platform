@@ -57,10 +57,10 @@ export default function OpenShiftsPage() {
   }, []);
 
   useEffect(() => {
-    if (role === "STAFF" && weekStart) {
+    if (weekStart) {
       void loadOpen();
     }
-  }, [weekStart, role]);
+  }, [weekStart]);
 
   useEffect(() => {
     setWeekStart(formatDate(getMonday(new Date())));
@@ -101,14 +101,6 @@ export default function OpenShiftsPage() {
       setLoading(false);
     }
   };
-
-  if (role && role !== "STAFF") {
-    return (
-      <div className="rounded border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
-        This page is only available for staff members.
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6">
@@ -181,14 +173,16 @@ export default function OpenShiftsPage() {
                         {item.startTime} - {item.endTime} · {item.shiftType}
                       </div>
                       <div className="text-slate-400">Open slots: {item.openSlots}</div>
-                      <button
-                        type="button"
-                        className="mt-2 rounded-full border border-slate-200 px-2 py-1 text-[10px] font-semibold text-slate-700"
-                        onClick={() => void handleApply(item.id)}
-                        disabled={loading}
-                      >
-                        Apply
-                      </button>
+                      {role === "STAFF" ? (
+                        <button
+                          type="button"
+                          className="mt-2 rounded-full border border-slate-200 px-2 py-1 text-[10px] font-semibold text-slate-700"
+                          onClick={() => void handleApply(item.id)}
+                          disabled={loading}
+                        >
+                          Apply
+                        </button>
+                      ) : null}
                     </div>
                   ))
                 )}

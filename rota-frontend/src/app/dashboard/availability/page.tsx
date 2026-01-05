@@ -61,7 +61,7 @@ export default function AvailabilityPage() {
 
   return (
     <div className="space-y-6">
-      {role && role !== "STAFF" ? (
+      {role && role !== "STAFF" && role !== "TEAM_LEADER" ? (
         <div className="rounded border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
           This page is intended for staff availability submissions.
         </div>

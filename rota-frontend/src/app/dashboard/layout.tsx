@@ -14,8 +14,8 @@ const navItems = [
   { label: "Shifts", href: "/dashboard/shifts", roles: ["ADMIN", "MANAGER", "TEAM_LEADER"] },
   { label: "Assignments", href: "/dashboard/assignments", roles: ["ADMIN", "MANAGER", "TEAM_LEADER"] },
   { label: "My Shifts", href: "/dashboard/my-shifts", roles: ["STAFF"] },
-  { label: "Open Shifts", href: "/dashboard/open-shifts", roles: ["STAFF"] },
-  { label: "Availability", href: "/dashboard/availability", roles: ["STAFF"] }
+  { label: "Open Shifts", href: "/dashboard/open-shifts", roles: ["ADMIN", "MANAGER", "TEAM_LEADER", "STAFF"] },
+  { label: "Availability", href: "/dashboard/availability", roles: ["STAFF", "TEAM_LEADER"] }
 ];
 
 export default function DashboardLayout({
